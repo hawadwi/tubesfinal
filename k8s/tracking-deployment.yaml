@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tracking-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tracking-service
+  template:
+    metadata:
+      labels:
+        app: tracking-service
+    spec:
+      containers:
+      - name: tracking-service
+        image: dhiyauu/tracking-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8084

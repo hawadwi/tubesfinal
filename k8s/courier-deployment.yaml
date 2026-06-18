@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: courier-service
+
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: courier-service
+
+  template:
+    metadata:
+      labels:
+        app: courier-service
+
+    spec:
+      containers:
+      - name: courier-service
+
+        image: dhiyauu/courier-service:latest
+        imagePullPolicy: Always
+
+        ports:
+        - containerPort: 8081
+
+        env:
+        - name: DB_HOST
+          value: mysql
+
+        - name: DB_PORT
+          value: "3306"
+
+        - name: DB_USER
+          value: root
+
+        - name: DB_PASSWORD
+          value: root
+
+        - name: DB_NAME
+          value: tubesdb
+
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8081
+          initialDelaySeconds: 10
+          periodSeconds: 10

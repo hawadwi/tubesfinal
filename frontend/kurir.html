@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kurir Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Kurir Dashboard</h1>
+            <button class="btn-logout" onclick="logout()">Logout</button>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalDeliveries">0</div>
+                <div class="stat-label">Total Deliveries</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="inDeliveryCount">0</div>
+                <div class="stat-label">In Delivery</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="completedCount">0</div>
+                <div class="stat-label">Completed</div>
+            </div>
+        </div>
+
+        <div class="filters">
+            <select id="statusFilter">
+                <option value="">Semua Status</option>
+                <option value="pending">Pending</option>
+                <option value="in_delivery">In Delivery</option>
+                <option value="completed">Completed</option>
+            </select>
+            <button onclick="loadDeliveries()">Refresh</button>
+        </div>
+
+        <div id="error"></div>
+        <div id="deliveries" class="deliveries-list">
+            <div class="loading">Loading deliveries...</div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        const COURIER_URL = "http://localhost:8085";
+
+        function logout() {
+            localStorage.removeItem("token");
+            window.location.href = "login.html";
+        }
+
+        async function loadDeliveries() {
+            try {
+                document.getElementById("error").innerHTML = "";
+                document.getElementById("deliveries").innerHTML = '<div class="loading">Loading deliveries...</div>';
+
+                const response = await fetch(`${COURIER_URL}/deliveries`);
+                const deliveries = await response.json();
+
+                if (!Array.isArray(deliveries)) {
+                    document.getElementById("deliveries").innerHTML = '<div class="empty-state">Tidak ada deliveries</div>';
+                    return;
+                }
+
+                // Update stats
+                updateStats(deliveries);
+
+                const statusFilter = document.getElementById("statusFilter").value;
+                let filtered = deliveries;
+
+                if (statusFilter) {
+                    filtered = deliveries.filter(d => d.status === statusFilter);
+                }
+
+                if (filtered.length === 0) {
+                    document.getElementById("deliveries").innerHTML = '<div class="empty-state">Tidak ada deliveries dengan status terpilih</div>';
+                    return;
+                }
+
+                let html = "";
+                filtered.forEach(delivery => {
+                    const statusClass = `status-${delivery.status}`;
+                    const statusDisplay = delivery.status.replace("_", " ").toUpperCase();
+                    const isCompleted = delivery.status === "completed";
+                    const isPending = delivery.status === "pending";
+
+                    html += `
+                        <div class="delivery-card ${delivery.status}">
+                            <div class="delivery-header">
+                                <div class="delivery-resi">${delivery.resi}</div>
+                                <span class="delivery-status ${statusClass}">${statusDisplay}</span>
+                            </div>
+                            <div class="delivery-details">
+                                <div class="detail-item">
+                                    <div class="detail-label">Penerima</div>
+                                    <div class="detail-value">${delivery.nama_penerima || '-'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Telepon</div>
+                                    <div class="detail-value">${delivery.no_telp_penerima || '-'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Alamat Tujuan</div>
+                                    <div class="detail-value">${delivery.alamat_penerima || '-'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Berat Paket</div>
+                                    <div class="detail-value">${delivery.berat || 0} kg</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Zona</div>
+                                    <div class="detail-value">${delivery.assigned_zone || '-'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Created At</div>
+                                    <div class="detail-value">${new Date(delivery.created_at).toLocaleString()}</div>
+                                </div>
+                            </div>
+                            <div class="delivery-actions">
+                                ${isPending ? `<button class="btn-action btn-delivery" onclick="startDelivery('${delivery.resi}')">Start Delivery</button>` : ''}
+                                ${!isCompleted ? `<button class="btn-action btn-complete" onclick="completeDelivery('${delivery.resi}')">Mark Completed</button>` : `<button class="btn-action" disabled>Completed</button>`}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                document.getElementById("deliveries").innerHTML = html;
+
+            } catch (error) {
+                console.error("Error:", error);
+                document.getElementById("error").innerHTML = '<div class="error">Error loading deliveries. Make sure backend is running.</div>';
+            }
+        }
+
+        function updateStats(deliveries) {
+            const total = deliveries.length;
+            const inDelivery = deliveries.filter(d => d.status === "in_delivery").length;
+            const completed = deliveries.filter(d => d.status === "completed").length;
+
+            document.getElementById("totalDeliveries").innerText = total;
+            document.getElementById("inDeliveryCount").innerText = inDelivery;
+            document.getElementById("completedCount").innerText = completed;
+        }
+
+        async function startDelivery(resi) {
+            try {
+                const response = await fetch(`${COURIER_URL}/deliveries/${resi}/start`, {
+                    method: "PUT"
+                });
+
+                if (!response.ok) {
+                    alert("Gagal start delivery");
+                    return;
+                }
+
+                alert("Delivery started!");
+                loadDeliveries();
+
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Error starting delivery");
+            }
+        }
+
+        async function completeDelivery(resi) {
+            try {
+                const response = await fetch(`${COURIER_URL}/deliveries/${resi}/complete`, {
+                    method: "PUT"
+                });
+
+                if (!response.ok) {
+                    alert("Gagal complete delivery");
+                    return;
+                }
+
+                alert("Delivery completed!");
+                loadDeliveries();
+
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Error completing delivery");
+            }
+        }
+
+        // Load deliveries on page load
+        loadDeliveries();
+    </script>
+</body>
+</html>

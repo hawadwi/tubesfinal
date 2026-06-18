@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gudang Admin</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Gudang Admin</h1>
+            <button class="btn-logout" onclick="logout()">Logout</button>
+        </div>
+
+        <div class="filters">
+            <select id="statusFilter">
+                <option value="">Semua Status</option>
+                <option value="pending">Pending</option>
+                <option value="ready">Ready</option>
+            </select>
+            <button onclick="loadPackages()">Refresh</button>
+        </div>
+
+        <div id="error"></div>
+        <div id="packages" class="packages-list">
+            <div class="loading">Loading packages...</div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        const GUDANG_URL = "http://localhost:8084";
+
+        function logout() {
+            localStorage.removeItem("token");
+            window.location.href = "login.html";
+        }
+
+        async function loadPackages() {
+            try {
+                document.getElementById("error").innerHTML = "";
+                document.getElementById("packages").innerHTML = '<div class="loading">Loading packages...</div>';
+
+                const response = await fetch(`${GUDANG_URL}/packages`);
+                const packages = await response.json();
+
+                if (!Array.isArray(packages)) {
+                    document.getElementById("packages").innerHTML = '<div class="empty-state">Tidak ada packages</div>';
+                    return;
+                }
+
+                const statusFilter = document.getElementById("statusFilter").value;
+                let filtered = packages;
+
+                if (statusFilter) {
+                    filtered = packages.filter(p => p.status === statusFilter);
+                }
+
+                if (filtered.length === 0) {
+                    document.getElementById("packages").innerHTML = '<div class="empty-state">Tidak ada packages dengan status terpilih</div>';
+                    return;
+                }
+
+                let html = "";
+                filtered.forEach(pkg => {
+                    const isReady = pkg.status === "ready";
+                    const statusClass = isReady ? "status-ready" : "status-pending";
+                    const statusText = isReady ? "Ready" : "Pending";
+
+                    html += `
+                        <div class="package-card ${pkg.status}">
+                            <div class="package-header">
+                                <div class="package-resi">${pkg.resi}</div>
+                                <span class="package-status ${statusClass}">${statusText}</span>
+                            </div>
+                            <div class="package-details">
+                                <div class="detail-item">
+                                    <div class="detail-label">Nama Barang</div>
+                                    <div class="detail-value">${pkg.nama_barang || '-'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Berat</div>
+                                    <div class="detail-value">${pkg.berat || 0} kg</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Jenis</div>
+                                    <div class="detail-value">${pkg.jenis || '-'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Dimensi</div>
+                                    <div class="detail-value">${pkg.dimensi || '-'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Zona</div>
+                                    <div class="detail-value">${pkg.warehouse_zone || '-'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Penerima</div>
+                                    <div class="detail-value">${pkg.nama_penerima || '-'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Telepon</div>
+                                    <div class="detail-value">${pkg.no_telp_penerima || '-'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Alamat Penerima</div>
+                                    <div class="detail-value">${pkg.alamat_penerima || '-'}</div>
+                                </div>
+                            </div>
+                            <div class="package-actions">
+                                <button class="btn-complete" onclick="completeSorting('${pkg.resi}')" ${isReady ? 'disabled' : ''}>
+                                    ${isReady ? 'Already Ready' : 'Complete Sorting'}
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                document.getElementById("packages").innerHTML = html;
+
+            } catch (error) {
+                console.error("Error:", error);
+                document.getElementById("error").innerHTML = '<div class="error">Error loading packages. Make sure backend is running.</div>';
+            }
+        }
+
+        async function completeSorting(resi) {
+            try {
+                const response = await fetch(`${GUDANG_URL}/packages/${resi}/complete`, {
+                    method: "PUT"
+                });
+
+                if (!response.ok) {
+                    alert("Gagal complete sorting");
+                    return;
+                }
+
+                alert("Sorting completed!");
+                loadPackages();
+
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Error completing sorting");
+            }
+        }
+
+        // Load packages on page load
+        loadPackages();
+    </script>
+</body>
+</html>

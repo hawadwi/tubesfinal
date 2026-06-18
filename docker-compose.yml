@@ -1,0 +1,699 @@
+# services:
+
+#   # user-service:
+#   #   image: user-service:latest
+#   #   ports:
+#   #     - "8081:8081"
+#   #   depends_on:
+#   #     - mysql
+
+#   # order-service:
+#   #   image: order-service:latest
+#   #   ports:
+#   #     - "8083:8083"
+#   #   depends_on:
+#   #     - mysql
+
+
+
+
+# user-service:
+#   image: tubestahap2-user-service:latest
+#   ports:
+#     - "8081:8081"
+#   depends_on:
+#     - mysql
+
+# order-service:
+#   image: tubestahap2-order-service:latest
+#   ports:
+#     - "8083:8083"
+#   depends_on:
+#     - mysql
+
+
+
+
+
+
+#   # tracking-service:
+#   #   image: tracking-service:latest
+#   #   ports:
+#   #     - "8084:8084"
+#   #   depends_on:
+#   #     - mysql
+
+#   # gudang-service:
+#   #   image: gudang-service:latest
+#   #   ports:
+#   #     - "8085:8085"
+#   #   depends_on:
+#   #     - mysql
+#   #   environment:
+#   #     DB_HOST: mysql
+#   #     DB_PORT: "3306"
+#   #     DB_USER: root
+#   #     DB_PASSWORD: root
+#   #     DB_NAME: tubesdb
+
+#   # courier-service:
+#   #   image: courier-service:latest
+#   #   ports:
+#   #     - "8086:8086"
+#   #   depends_on:
+#   #     - mysql
+
+#   # report-service:
+#   #   image: report-service:latest
+#   #   ports:
+#   #     - "8087:8087"
+#   #   depends_on:
+#   #     - mysql
+
+#   # payment-service:
+#   #   image: payment-service:latest
+#   #   ports:
+#   #     - "8088:8088"
+#   #   depends_on:
+#   #     - mysql
+#   #   environment:
+#   #     DB_HOST: mysql
+#   #     DB_PORT: "3306"
+#   #     DB_USER: root
+#   #     DB_PASSWORD: root
+#   #     DB_NAME: tubesdb
+
+#   mysql:
+#     image: mysql:8
+#     container_name: mysql-tubes
+#     restart: always
+#     environment:
+#       MYSQL_ROOT_PASSWORD: root
+#     ports:
+#       - "3306:3306"
+#     healthcheck:
+#       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+#       timeout: 20s
+#       retries: 10
+#     volumes:
+#       - mysql_data:/var/lib/mysql
+#       - ./mysql-init:/docker-entrypoint-initdb.d
+
+# volumes:
+#   mysql_data:
+
+
+
+
+
+# services:
+
+#   mysql:
+#     image: mysql:8
+#     container_name: mysql-tubes
+#     restart: always
+#     environment:
+#       MYSQL_ROOT_PASSWORD: root
+#     ports:
+#       - "3306:3306"
+#     volumes:
+#       - mysql_data:/var/lib/mysql
+#       - ./mysql-init:/docker-entrypoint-initdb.d
+
+#   user-service:
+#     build: ./user-service
+#     ports:
+#       - "8081:8081"
+#     depends_on:
+#       - mysql
+
+#   order-service:
+#     build: ./order-service
+#     ports:
+#       - "8083:8083"
+#     depends_on:
+#       - mysql
+
+#   gudang-service:
+#     build: ./gudang-service
+#     ports:
+#       - "8085:8080"
+#     depends_on:
+#       mysql:
+#         condition: service_healthy
+#       rabbitmq:
+#         condition: service_healthy
+#     environment:
+#       DB_HOST: mysql
+#       DB_PORT: 3306
+#       DB_USER: root
+#       DB_PASSWORD: root
+#       DB_NAME: gudang_microservice
+#       DB_DSN: root:root@tcp(mysql:3306)/gudang_microservice?parseTime=true
+
+#   courier-service:
+#     build: ./courier-service
+#     ports:
+#       - "8086:8081"
+#     depends_on:
+#       mysql:
+#         condition: service_healthy
+#       rabbitmq:
+#         condition: service_healthy
+#     environment:
+#       DB_HOST: mysql
+#       DB_PORT: 3306
+#       DB_USER: root
+#       DB_PASSWORD: root
+#       DB_NAME: courier_microservice
+#       DB_DSN: root:root@tcp(mysql:3306)/courier_microservice?parseTime=true
+
+#   rabbitmq:
+#     image: rabbitmq:3-management
+#     ports:
+#       - "5672:5672"
+#       - "15672:15672"
+#     healthcheck:
+#       test: ["CMD", "rabbitmqctl", "status"]
+#       interval: 5s
+#       timeout: 10s
+#       retries: 20
+
+#   mysql:
+#     image: mysql:8
+#     container_name: mysql-tubes
+#     restart: always
+#     ports:
+#       - "3307:3306"
+#     environment:
+#       MYSQL_ROOT_PASSWORD: root
+#       MYSQL_DATABASE: gudang_microservice
+#     healthcheck:
+#       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+#       interval: 5s
+#       timeout: 10s
+#       retries: 30
+#     volumes:
+#       - ./init/gudang_microservice.sql:/docker-entrypoint-initdb.d/gudang_microservice.sql
+#       - ./init/courier_microservice.sql:/docker-entrypoint-initdb.d/courier_microservice.sql
+
+# networks:
+#   default:
+#     name: logistics-network
+
+# volumes:
+#   mysql_data:
+
+
+
+
+# services:
+
+#   mysql:
+#     image: mysql:8
+#     container_name: mysql-tubes
+#     restart: always
+#     environment:
+#       MYSQL_ROOT_PASSWORD: root
+#     ports:
+#       - "3306:3306"
+#     healthcheck:
+#       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+#       interval: 5s
+#       timeout: 5s
+#       retries: 10
+#     volumes:
+#       - mysql_data:/var/lib/mysql
+#       - ./mysql-init:/docker-entrypoint-initdb.d
+
+#   user-service:
+#     build: ./user-service
+#     ports:
+#       - "8081:8081"
+#     depends_on:
+#       mysql:
+#         condition: service_healthy
+
+#   order-service:
+#     build: ./order-service
+#     ports:
+#       - "8083:8083"
+#     depends_on:
+#       mysql:
+#         condition: service_healthy
+
+#   gudang-service:
+#     build: ./gudang-service
+#     ports:
+#       - "8085:8080"
+#     depends_on:
+#       mysql:
+#         condition: service_healthy
+#       rabbitmq:
+#         condition: service_healthy
+#     environment:
+#       DB_HOST: mysql
+#       DB_PORT: 3306
+#       DB_USER: root
+#       DB_PASSWORD: root
+#       DB_NAME: gudang_microservice
+#       DB_DSN: root:root@tcp(mysql:3306)/gudang_microservice?parseTime=true
+
+#   courier-service:
+#     build: ./courier-service
+#     ports:
+#       - "8086:8081"
+#     depends_on:
+#       mysql:
+#         condition: service_healthy
+#       rabbitmq:
+#         condition: service_healthy
+#     environment:
+#       DB_HOST: mysql
+#       DB_PORT: 3306
+#       DB_USER: root
+#       DB_PASSWORD: root
+#       DB_NAME: courier_microservice
+#       DB_DSN: root:root@tcp(mysql:3306)/courier_microservice?parseTime=true
+
+#   rabbitmq:
+#     image: rabbitmq:3-management
+#     ports:
+#       - "5672:5672"
+#       - "15672:15672"
+#     healthcheck:
+#       test: ["CMD", "rabbitmqctl", "status"]
+#       interval: 5s
+#       timeout: 10s
+#       retries: 20
+
+# networks:
+#   default:
+#     name: logistics-network
+    
+# volumes:
+#   mysql_data:
+
+
+
+
+# services:
+
+#   mysql:
+#     image: mysql:8
+#     container_name: mysql-tubes
+#     restart: always
+#     environment:
+#       MYSQL_ROOT_PASSWORD: root
+#     ports:
+#       - "3306:3306"
+#     healthcheck:
+#       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+#       interval: 5s
+#       timeout: 5s
+#       retries: 10
+#     volumes:
+#       - mysql_data:/var/lib/mysql
+#       - ./mysql-init:/docker-entrypoint-initdb.d
+
+#   user-service:
+#     build: ./user-service
+#     ports:
+#       - "8081:8081"
+#     depends_on:
+#       mysql:
+#         condition: service_healthy
+#     environment:
+#       - DB_HOST=mysql
+#       - DB_PORT=3306
+#       - DB_USER=root
+#       - DB_PASSWORD=root
+#       - DB_NAME=userdb  # <-- Mengarah ke userdb yang dibuat di init.sql
+#       # - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/ # Buka ini kalau user-service butuh RabbitMQ
+
+#   order-service:
+#     build: ./order-service
+#     ports:
+#       - "8083:8083"
+#     depends_on:
+#       mysql:
+#         condition: service_healthy
+#       rabbitmq:
+#         condition: service_healthy # Menunggu RabbitMQ benar-benar sehat sebelum menyalakan order-service
+#     environment:
+#       - DB_HOST=mysql
+#       - DB_PORT=3306
+#       - DB_USER=root
+#       - DB_PASSWORD=root
+#       - DB_NAME=orderdb  # Langsung menembak ke orderdb hasil buatan init.sql
+#       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/ # <-- Alamat wajib di network Docker
+
+#   gudang-service:
+#     build: ./gudang-service
+#     ports:
+#       - "8085:8080"
+#     depends_on:
+#       mysql:
+#         condition: service_healthy
+#       rabbitmq:
+#         condition: service_healthy
+#     environment:
+#       DB_HOST: mysql
+#       DB_PORT: 3306
+#       DB_USER: root
+#       DB_PASSWORD: root
+#       DB_NAME: gudang_microservice
+#       DB_DSN: root:root@tcp(mysql:3306)/gudang_microservice?parseTime=true
+
+#   courier-service:
+#     build: ./courier-service
+#     ports:
+#       - "8086:8081"
+#     depends_on:
+#       mysql:
+#         condition: service_healthy
+#       rabbitmq:
+#         condition: service_healthy
+#     environment:
+#       DB_HOST: mysql
+#       DB_PORT: 3306
+#       DB_USER: root
+#       DB_PASSWORD: root
+#       DB_NAME: courier_microservice
+#       DB_DSN: root:root@tcp(mysql:3306)/courier_microservice?parseTime=true
+
+#   rabbitmq:
+#     image: rabbitmq:3-management
+#     ports:
+#       - "5672:5672"
+#       - "15672:15672"
+#     healthcheck:
+#       test: ["CMD", "rabbitmqctl", "status"]
+#       interval: 5s
+#       timeout: 10s
+#       retries: 20
+
+# networks:
+#   default:
+#     name: logistics-network
+    
+# volumes:
+#   mysql_data:
+
+
+
+
+# services:
+
+#   mysql:
+#     image: mysql:8
+#     container_name: mysql-tubes
+#     restart: always
+#     environment:
+#       MYSQL_ROOT_PASSWORD: root
+#     ports:
+#       - "3306:3306"
+#     healthcheck:
+#       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+#       interval: 5s
+#       timeout: 5s
+#       retries: 10
+#     volumes:
+#       - mysql_data:/var/lib/mysql
+#       - ./mysql-init:/docker-entrypoint-initdb.d
+
+#   rabbitmq:
+#     image: rabbitmq:3-management
+#     container_name: rabbitmq
+#     ports:
+#       - "5672:5672"
+#       - "15672:15672"
+#     healthcheck:
+#       test: ["CMD", "rabbitmqctl", "status"]
+#       interval: 5s
+#       timeout: 10s
+#       retries: 20
+
+#   user-service:
+#     build: ./user-service
+#     ports:
+#       - "8081:8081"
+#     depends_on:
+#       mysql:
+#         condition: service_healthy
+#     environment:
+#       - DB_HOST=mysql
+#       - DB_PORT=3306
+#       - DB_USER=root
+#       - DB_PASSWORD=root
+#       - DB_NAME=userdb
+
+#   order-service:
+#     build: ./order-service
+#     ports:
+#       - "8083:8083"
+#     depends_on:
+#       mysql:
+#         condition: service_healthy
+#       rabbitmq:
+#         condition: service_healthy
+#     environment:
+#       - DB_HOST=mysql
+#       - DB_PORT=3306
+#       - DB_USER=root
+#       - DB_PASSWORD=root
+#       - DB_NAME=orderdb
+#       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+
+#   tracking-service:
+#     build: ./tracking-service
+#     ports:
+#       - "8084:8084"
+#     depends_on:
+#       mysql:
+#         condition: service_healthy
+#       rabbitmq:
+#         condition: service_healthy
+
+#   gudang-service:
+#     build: ./gudang-service
+#     ports:
+#       - "8085:8080"
+#     depends_on:
+#       mysql:
+#         condition: service_healthy
+#       rabbitmq:
+#         condition: service_healthy
+#     environment:
+#       DB_HOST: mysql
+#       DB_PORT: 3306
+#       DB_USER: root
+#       DB_PASSWORD: root
+#       DB_NAME: gudang_microservice
+#       DB_DSN: root:root@tcp(mysql:3306)/gudang_microservice?parseTime=true
+
+#   courier-service:
+#     build: ./courier-service
+#     ports:
+#       - "8086:8081"
+#     depends_on:
+#       mysql:
+#         condition: service_healthy
+#       rabbitmq:
+#         condition: service_healthy
+#     environment:
+#       DB_HOST: mysql
+#       DB_PORT: 3306
+#       DB_USER: root
+#       DB_PASSWORD: root
+#       DB_NAME: courier_microservice
+#       DB_DSN: root:root@tcp(mysql:3306)/courier_microservice?parseTime=true
+
+#   report-service:
+#     build: ./report-service
+#     ports:
+#       - "8087:8087"
+#     depends_on:
+#       mysql:
+#         condition: service_healthy
+
+#   # 🔥 SEKARANG PAYMENT SERVICE BERGABUNG DI SINI
+#   payment-service:
+#     build: ./payment-service
+#     ports:
+#       - "8088:8088"
+#     depends_on:
+#       mysql:
+#         condition: service_healthy
+#       rabbitmq:
+#         condition: service_healthy
+#     environment:
+#       DB_HOST: mysql
+#       DB_PORT: 3306
+#       DB_USER: root
+#       DB_PASSWORD: root
+#       DB_NAME: paymentdb # <-- Akan otomatis mengarah ke database paymentdb
+
+# networks:
+#   default:
+#     name: logistics-network
+    
+# volumes:
+#   mysql_data:
+
+
+
+
+services:
+
+  mysql:
+    image: mysql:8
+    container_name: mysql-tubesya
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3308:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+
+  user-service:
+    build: ./user-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=root
+      - DB_NAME=userdb
+
+  order-service:
+    build: ./order-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=root
+      - DB_NAME=orderdb
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+
+  tracking-service:
+    build: ./tracking-service
+    ports:
+      - "8084:8084"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment: # 🔥 FIXED: Ditambahkan konfigurasi DB dan RabbitMQ untuk tracking
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=root
+      - DB_NAME=trackingdb
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+
+  gudang-service:
+    build: ./gudang-service
+    ports:
+      - "8085:8085"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: gudang_microservice
+      DB_DSN: root:root@tcp(mysql:3306)/gudang_microservice?parseTime=true
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/ # 🔥 FIXED: Ditambahkan untuk kirim data sorting
+
+  courier-service:
+    build: ./courier-service
+    ports:
+      - "8086:8086"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: courier_microservice
+      DB_DSN: root:root@tcp(mysql:3306)/courier_microservice?parseTime=true
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/ # 🔥 FIXED: Ditambahkan untuk kirim update kurir
+
+  report-service:
+    build: ./report-service
+    ports:
+      - "8087:8087" # Pastikan di port eksternal 8087
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment: # 🔥 FIXED: Tambahkan environment DB seperti service lainnya
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=root
+      - DB_NAME=reportdb # Sesuaikan dengan nama DB report kamu
+      - TRACKING_SERVICE_URL=http://tracking-service:8084
+
+  payment-service:
+    build: ./payment-service
+    ports:
+      - "8088:8088"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: paymentdb
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+
+networks:
+  default:
+    name: logistics-network
+    
+volumes:
+  mysql_data:
