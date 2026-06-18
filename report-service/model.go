@@ -29,9 +29,10 @@ type OrderItem struct {
 
 // Struktur data dari tracking-service
 type TrackingItem struct {
-	ID     int    `json:"id"`
-	Resi   string `json:"resi"`
-	Status string `json:"status"`
+	Resi      string `json:"resi"`
+	Lokasi    string `json:"lokasi"`
+	Event     string `json:"event"`
+	Timestamp string `json:"timestamp"`
 }
 
 // Output untuk laporan status

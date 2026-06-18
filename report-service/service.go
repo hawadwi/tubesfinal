@@ -24,9 +24,60 @@ func NewReportService(repo ReportRepository) *ReportService {
 	return &ReportService{repo: repo}
 }
 
-// Method lama (tetap pakai repo)
+// 🔥 FIXED: Get Daily Report dengan timestamp filter dari tracking service
 func (s *ReportService) GetDailyReport(ctx context.Context, date string) (*DailyReport, error) {
-	return s.repo.GetDailyReport(ctx, date)
+
+    trackings, err := fetchTrackings()
+    if err != nil {
+        return &DailyReport{
+            TotalPaket:  0,
+            Delivered:   0,
+            Pending:     0,
+            Terlambat:   0,
+            RataRataETA: 0,
+        }, nil
+    }
+
+    if len(trackings) == 0 {
+        return &DailyReport{
+            TotalPaket:  0,
+            Delivered:   0,
+            Pending:     0,
+            Terlambat:   0,
+            RataRataETA: 0,
+        }, nil
+    }
+
+    var total, pending, delivered int
+
+    for _, t := range trackings {
+
+        ts, err := time.Parse(time.RFC3339, t.Timestamp)
+        if err != nil {
+            ts, err = time.Parse("2006-01-02 15:04:05", t.Timestamp)
+            if err != nil {
+                continue
+            }
+        }
+
+        if ts.Format("2006-01-02") == date {
+            total++
+
+            if t.Lokasi == "Serah terima ke penerima" {
+                delivered++
+            } else {
+                pending++
+            }
+        }
+    }
+
+    return &DailyReport{
+        TotalPaket:  total,
+        Delivered:   delivered,
+        Pending:     pending,
+        Terlambat:   0,
+        RataRataETA: 0,
+    }, nil
 }
 
 func (s *ReportService) GetProblems(ctx context.Context) ([]ProblemPackage, error) {
@@ -116,8 +167,8 @@ func (s *ReportService) GetStatusReport(ctx context.Context) ([]StatusReport, er
 
 	count := make(map[string]int)
 	for _, t := range trackings {
-		if t.Status != "" {
-			count[t.Status]++
+		if t.Lokasi != "" {
+			count[t.Lokasi]++
 		}
 	}
 

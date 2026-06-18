@@ -1,9 +1,10 @@
 package main
 
 import (
-	"encoding/json"
-	"net/http"
-	"strings"
+    "encoding/json"
+    "net/http"
+    "strings"
+    "time"
 )
 
 var resiValidator ResiValidator = RealResiValidator{}
@@ -99,51 +100,66 @@ func getCourierLocationHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 }
 
-// 🔥 TAMBAHKAN FUNGSI INI DI PALING BAWAH FILE tracking-service/handler.go
-// 🔥 VERSI PERBAIKAN: Taruh di paling bawah file tracking-service/handler.go
-func getAllTrackingsHandler(w http.ResponseWriter, r *http.Request) { // 1. FIXED: Parameter diganti jadi *http.Request
+func getAllTrackingsHandler(w http.ResponseWriter, r *http.Request) {
 
-	// Kita bypass pengecekan repo dengan langsung memanggil DB global milik package main jika bertipe MySQLRepository,
-	// atau jika trackingRepo adalah interface, kita cast ke strukturnya.
-	// Supaya aman dan pasti jalan, kita gunakan interface type assertion ke MySQLRepository:
-	repo, ok := trackingRepo.(MySQLRepository)
-	if !ok {
-		w.WriteHeader(500)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Repository beralih tipe atau tidak valid"})
-		return
-	}
+    repo, ok := trackingRepo.(MySQLRepository)
+    if !ok {
+        w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(http.StatusInternalServerError)
+        json.NewEncoder(w).Encode(map[string]string{
+            "error": "repository tidak valid",
+        })
+        return
+    }
 
-	// 2. FIXED: Mengakses DB via struct repo yang sudah diekstrak
-	rows, err := repo.DB.Query("SELECT resi, lokasi, event, timestamp FROM tracking_events")
-	if err != nil {
-		w.WriteHeader(500)
-		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-		return
-	}
-	defer rows.Close()
+    rows, err := repo.DB.Query(`
+        SELECT resi, lokasi, event, timestamp
+        FROM tracking_events
+        ORDER BY timestamp ASC
+    `)
+    if err != nil {
+        w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(http.StatusInternalServerError)
+        json.NewEncoder(w).Encode(map[string]string{
+            "error": err.Error(),
+        })
+        return
+    }
+    defer rows.Close()
 
-	type TrackData struct {
-		Resi      string `json:"resi"`
-		Lokasi    string `json:"lokasi"`
-		Event     string `json:"event"`
-		Timestamp string `json:"timestamp"`
-	}
+    type TrackData struct {
+        Resi      string `json:"resi"`
+        Lokasi    string `json:"lokasi"`
+        Event     string `json:"event"`
+        Timestamp string `json:"timestamp"`
+    }
 
-	var list []TrackData
-	for rows.Next() {
-		var t TrackData
-		// Scan data dari baris database
-		err := rows.Scan(&t.Resi, &t.Lokasi, &t.Event, &t.Timestamp)
-		if err != nil {
-			continue
-		}
-		list = append(list, t) // FIXED: Memasukkan objek t ke dalam slice list
-	}
+    var list []TrackData
 
-	if list == nil {
-		list = []TrackData{}
-	}
+    for rows.Next() {
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(list)
+        var t TrackData
+        var ts time.Time
+
+        err := rows.Scan(
+            &t.Resi,
+            &t.Lokasi,
+            &t.Event,
+            &ts,
+        )
+        if err != nil {
+            continue
+        }
+
+        t.Timestamp = ts.Format(time.RFC3339)
+
+        list = append(list, t)
+    }
+
+    if list == nil {
+        list = []TrackData{}
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(list)
 }

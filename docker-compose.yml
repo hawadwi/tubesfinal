@@ -548,12 +548,12 @@ services:
 
   mysql:
     image: mysql:8
-    container_name: mysql-tubesya
+    container_name: mysql-tubeslagi
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
     ports:
-      - "3308:3306"
+      - "3309:3306"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
       interval: 5s
