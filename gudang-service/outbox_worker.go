@@ -59,6 +59,13 @@ func StartOutboxWorker(repo *PackageRepository) {
 				continue
 			}
 
+			// Kirim ke Tracking Service
+			err = mq.Publish("tracking_queue", e.Payload)
+			if err != nil {
+				log.Println("publish tracking_queue failed:", err)
+				continue
+			}
+
 			_ = repo.MarkAsSent(e.ID)
 			log.Println("event sent:", e.ID)
 		}
